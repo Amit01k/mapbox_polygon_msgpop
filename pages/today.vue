@@ -22,9 +22,10 @@
             <th>Opacity</th>
             <th>Delete</th>
           </tr>
-          <tr v-for="(val, index) in data.mapEvent" :key="val.name">
-            <td>{{ index }} ) {{ val.name }}</td>
+          <tr v-for="(val, index) in state.polygon" :key="val.name">
+            <td>{{ index + 1 }} ) {{ val.name }}</td>
             <td>{{ val.desc }}</td>
+
             <td>
               <!--   v-model="info.checkedInfo"
                           :value="data.coordinates" -->
@@ -51,6 +52,9 @@
             </td>
           </tr>
         </table>
+        <div>
+          <!-- <p>{{ state.polygon }}</p> -->
+        </div>
       </div>
     </div>
     <!-- Map  -->
@@ -144,6 +148,7 @@ const state = reactive({
     preserveDrawingBuffer: true,
     // container: "map",
   } as mapboxgl.MapboxOptions,
+  polygon: [],
 });
 let info = reactive({
   data1: {
@@ -241,6 +246,7 @@ async function getMapData(tempMap: mapboxgl.Map) {
 }
 // // this function is used to show and hide mapEvent
 function showDataOnMap(e, index) {
+  console.log("this is come from line nu-144", e);
   console.log(e.target.checked);
   //   let id = `${data.mapEvent[index].id}`;
   console.log("data.layers ", data.mapEvent);
@@ -443,12 +449,12 @@ body {
 }
 .left1 {
   height: 100vh;
-  width: 20vw;
+  width: 40vw;
   float: left;
 }
 .right1 {
   height: 100vh;
-  width: 80vw;
+  width: 60vw;
   float: right;
   position: relative;
 }
