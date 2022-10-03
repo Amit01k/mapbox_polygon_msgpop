@@ -48,7 +48,7 @@
               />
             </td>
             <td>
-              <a @click="deleteLayer(index)">delete</a>
+              <a @click="onDeleteOfProduct(val.id)">delete</a>
             </td>
           </tr>
         </table>
@@ -426,6 +426,13 @@ function deleteLayer(i) {
 }
 function Cancel() {
   info.show = false;
+}
+////////////////////////delete layer////////////////////////////////////
+async function onDeleteOfProduct(id) {
+  await $fetch("http://localhost:8080/map/geom/" + id, {
+    method: "DELETE",
+  });
+  //getProductAPI();
 }
 </script>
 <style>
