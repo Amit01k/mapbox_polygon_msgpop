@@ -1,9 +1,7 @@
 <template>
-  <!--  class="w-screen h-screen" -->
-  <!-- <main> -->
   <head>
     <meta charset="utf-8" />
-    <title>Mapbox Event : Directions</title>
+    <title>||Mapbox||</title>
     <meta name="robots" content="noindex, nofollow" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
   </head>
@@ -11,25 +9,25 @@
   <div class="main">
     <!-- Toggle Bar code -->
     <div class="left1 bg-gray">
-      <!-- <div class="float-right">
-        <button class="rounded-sm p-2 bg-black text-white">Refresh</button>
-      </div> -->
+      <div class="float-right"></div>
       <br />
       <div class="">
-        <h1 class="font-bold ml-2 text-gray-300">Stored Events</h1>
+        <h1 class="font-bold ml-2">||Layers||</h1>
         <br />
         <table class="">
           <tr>
             <th>Name</th>
             <th>Desc</th>
             <th>Toggle</th>
+            <th>Opacity</th>
+            <th>Delete</th>
           </tr>
           <tr v-for="(val, index) in data.mapEvent" :key="val.name">
-            <td>{{ index + 1 }} ) {{ val.name }}</td>
+            <td>{{ index }} ) {{ val.name }}</td>
             <td>{{ val.desc }}</td>
             <td>
               <!--   v-model="info.checkedInfo"
-                        :value="data.coordinates" -->
+                          :value="data.coordinates" -->
               <!-- id="{{index}}"  v-bind:value="data.coordinates"  v-model="info.checkedInfo" -->
               <input
                 type="checkbox"
@@ -38,6 +36,19 @@
                 @click="showDataOnMap($event, index)"
               />
             </td>
+            <td>
+              <!-- v-model="info.opacity" -->
+              <input
+                type="range"
+                @change="changeColorOpacity(index)"
+                min="1"
+                max="10"
+                v-model="info.opacity"
+              />
+            </td>
+            <td>
+              <a @click="deleteLayer(index)">delete</a>
+            </td>
           </tr>
         </table>
       </div>
@@ -45,7 +56,7 @@
     <!-- Map  -->
     <div class="right1">
       <v-map class="w-full h-full" :options="state.map" @loaded="getMapData">
-        <div class="zIndex1 rounded-lg w-5/12" v-show="info.show" id="form">
+        <div class="zIndex1 bg-red-500 rounded-lg w-5/12" v-show="info.show">
           <div class="p-2">
             <table class="p-2">
               <tr class="p-1">
@@ -103,7 +114,6 @@
             </table>
           </div>
         </div>
-        -->
       </v-map>
     </div>
   </div>
@@ -111,24 +121,21 @@
 </template>
 <script setup lang="ts">
 import VMap from "v-mapbox";
-import mapboxgl from "mapbox-gl";
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
+import mapboxgl from "mapbox-gl";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 const data: any = reactive({
   map: {} as mapboxgl.Map,
   mapEvent: [],
   draw: {},
 });
-
-console.log("this is come from ", data.mapEvent);
-
 const state = reactive({
   map: {
     accessToken:
       "pk.eyJ1Ijoic2F0eWEtYXV0aSIsImEiOiJjbDdwdnFqMWIwMWF3M3BxZ3dvaTZlNW5yIn0.wrAe-_808WZm-CBKVTwfIw",
     style: "mapbox://styles/mapbox/streets-v11?optimize=true",
     // center: [444.04931277036667, 26.266912177018096] as number[], //uses longitude, latitude
-    center: [74.04931277036667, 18.266912177018096] as number[],
+    center: [80.93902587890625, 26.841533092305998] as number[],
     zoom: 7,
     maxZoom: 22,
     crossSourceCollisions: false,
@@ -137,50 +144,51 @@ const state = reactive({
     preserveDrawingBuffer: true,
     // container: "map",
   } as mapboxgl.MapboxOptions,
-
-  datafromDatabase: [],
 });
 let info = reactive({
-  //   allData: [],
-  //   checkedInfo: [],
-  //   dataObject: {
-  //     name: "",
-  //     desc: "",
-  //     coordinates: [],
-  //   },
-  //   pointsData: [],
   data1: {
     name: "",
     desc: "",
     color: "",
-    geom: {},
+    geom: "",
+    geom1: {},
   },
-  //   arr: [],
+  opacity: 1,
   show: false,
   name: "",
   desc: "",
   color: "",
   geom: {},
+  changer: false,
+  deleteIndex: null,
 });
-
 async function getMapData(tempMap: mapboxgl.Map) {
   data.map = tempMap;
   mapboxgl.accessToken =
     "pk.eyJ1Ijoic2F0eWEtYXV0aSIsImEiOiJjbDdwdnFqMWIwMWF3M3BxZ3dvaTZlNW5yIn0.wrAe-_808WZm-CBKVTwfIw";
+  if (info.changer == true) {
+    let i = info.deleteIndex;
+    // data.map.removeLayer(data.mapEvent[i].geom.id);
+    // data.map.removeSource(data.mapEvent[i].geom.id);
+    info.changer = false;
+  }
+  info.changer = false;
   //   data.map.addControl(new mapboxgl.NavigationControl());
   var Draw = new MapboxDraw({
     displayControlsDefault: true,
     // Select which mapbox-gl-draw control buttons to add to the map.
     controls: {
       polygon: true,
-      //   trash: true,
+      trash: true,
+      point: true,
+      line_string: true,
     },
     // Set mapbox-gl-draw to draw by default.
     // The user does not have to click the polygon control button first.
     defaultMode: "draw_polygon",
   });
   data.draw = Draw;
-  data.map.addControl(Draw, "top-right");
+  data.map.addControl(Draw, "top-left");
   data.map.on("draw.create", updateData);
   //   data.map.on("draw.delete", updateData);
   // data.map.on("draw.update", updateData);
@@ -190,31 +198,10 @@ async function getMapData(tempMap: mapboxgl.Map) {
     console.log(e.features[0].id);
     console.log(e.features[0].geometry);
     info.geom = e.features[0];
+    info.data1.geom1 = e.features[0].geometry;
   }
-  //get data from databse
-  // getGisData();
-  // async function getGisData() {
-  //   state.datafromDatabase = await $fetch("http://localhost:8080/map/geom");
-  //   console.log("data: ", state.datafromDatabase);
-  //   for (const feature of state.datafromDatabase) {
-  //     // create a HTML element for each feature
-  //     const el = document.createElement("div");
-  //     el.className = "marker";
-
-  //     console.log("data from databse" + feature.geometry.coordinates);
-
-  //     // make a marker for each feature and add to the map
-  //     new mapboxgl.Marker(el)
-  //       .setLngLat(feature.geometry.coordinates)
-  //       // .setPopup(
-  //       //   new mapboxgl.Popup({ offset: 20 }) // add popups
-  //       //     .setHTML(`<h3>${feature.City_Name}</h3><p>${feature.City_Name}</p>`)
-  //       // )
-  //       .addTo(map);
-  //     console.log("line 212");
-  //   }
-  // }
-  //////////////////////////////////////////
+  //   info.changer = false;
+  //data come from databse  amit//////////////////////////////////
   polygon();
   async function polygon() {
     state.polygon = await $fetch("http://localhost:8080/map/geom");
@@ -234,14 +221,14 @@ async function getMapData(tempMap: mapboxgl.Map) {
         type: "Feature",
         geometry: {
           type: "Polygon",
-          coordinates: element.geometry.coordinates,
+          coordinates: element.geom.coordinates,
         },
       };
     });
 
-    map.addSource("polygon-data", featureCollection);
+    data.map.addSource("polygon-data", featureCollection);
 
-    map.addLayer({
+    data.map.addLayer({
       id: "park-boundary",
       type: "fill",
       source: "polygon-data",
@@ -250,18 +237,6 @@ async function getMapData(tempMap: mapboxgl.Map) {
         "fill-opacity": 0.4,
       },
     });
-
-    // map.addLayer({
-    //   id: "outline",
-    //   type: "line",
-    //   source: "park-boundary",
-    //   layout: {},
-    //   paint: {
-    //     "line-color": "#000",
-    //     //dark blackish
-    //     "line-width": 3,
-    //   },
-    // });
   }
 }
 // // this function is used to show and hide mapEvent
@@ -270,25 +245,65 @@ function showDataOnMap(e, index) {
   //   let id = `${data.mapEvent[index].id}`;
   console.log("data.layers ", data.mapEvent);
   if (e.target.checked == true) {
-    // data.map.addSource(data.mapEvent[0].id, {
-    //   type: "geojson",
-    //   data: data.mapEvent[0],
-    // });
+    info.changer = false;
+    var x;
     let colorPick;
     let flyToLocation;
+    let flyToLocation1;
     let colorSelect = data.mapEvent.filter((e) => {
       if (e.geom.id == data.mapEvent[index].geom.id) {
-        flyToLocation = data.mapEvent[index].geom;
+        // flyToLocation = data.mapEvent[index].geom.geometry.coordinates[index];
+        flyToLocation = e.geom.geometry.coordinates[0];
+        flyToLocation1 = e.geom.geometry.coordinates;
         colorPick = e.color;
         return e.color;
       }
     });
+    // flyToLocation = data.mapEvent[index].geom.geometry.coordinates[index];
+    console.log("flyloc", flyToLocation);
+    console.log("typeData", data.mapEvent[index].geom);
+    let type = data.mapEvent[index].geom.geometry.type;
+    let latlngArr = [];
+    if (type == "LineString") {
+      console.log("It is LineString");
+      flyToLocation.map((e) => {
+        console.log("e", e);
+        latlngArr.push(e);
+      });
+    }
+    if (type == "Polygon") {
+      console.log("It is Polygon");
+      latlngArr = flyToLocation[0];
+    }
+    if (type == "Point") {
+      console.log("It is Point");
+      console.log("point data", flyToLocation1);
+      console.log("point data1", flyToLocation1[0]);
+      console.log("point data2", flyToLocation1[1]);
+      latlngArr = [flyToLocation1[0], flyToLocation1[1]];
+      //   var x = data.map.marker([latlngArr[0], latlngArr[1]]).addTo(data.map);
+      x = new mapboxgl.Marker({
+        draggable: true,
+        color: colorPick,
+        // color: "#" + (Math.random().toString(16) + "000000").substring(2, 8),
+      })
+        .setLngLat([latlngArr[0], latlngArr[1]])
+        //   .setLngLat([74.04931277036667, 19.266912177018096])
+        .addTo(data.map);
+    }
+    let latlng = flyToLocation[0];
+    console.log("latlng", latlng);
+    // console.log("exact value", latlng[0], latlng[1]);
+    console.log("exact value latlng array ", latlngArr);
     // Fly to a random location
-    // data.map.flyTo({
-    //   center: [(Math.random() - 0.5) * 360, (Math.random() - 0.5) * 100],
-    //   essential: true, // this animation is considered essential with respect to prefers-reduced-motion
-    // });
-    console.log("selected flyToLocation", flyToLocation);
+    data.map.flyTo({
+      //   center: [(Math.random() - 0.5) * 360, (Math.random() - 0.5) * 100],
+      //   center: [latlng[0], latlng[1]],
+      center: [latlngArr[0], latlngArr[1]],
+      zoom: 6,
+      essential: true, // this animation is considered essential with respect to prefers-reduced-motion
+    });
+    // console.log("selected flyToLocation", flyToLocation[index]);
     console.log("selected color", colorSelect);
     console.log("Pick color", colorPick);
     console.log("checked", data.mapEvent[index].geom.id);
@@ -314,17 +329,19 @@ function showDataOnMap(e, index) {
       source: data.mapEvent[index].geom.id,
       type: "fill",
       layout: {},
-      paint: { "fill-color": colorPick, "fill-opacity": 0.3 },
+      paint: { "fill-color": colorPick, "fill-opacity": 0.5 },
     });
   } else {
-    // data.map.removeSource(data.mapEvent[0].id);
     data.map.removeLayer(data.mapEvent[index].geom.id);
     data.map.removeSource(data.mapEvent[index].geom.id);
+    // var marker = new mapboxgl.Marker().addTo(data.map);
+    // x.remove();
+    // data.map.remove(x);
+    data.map.marker.remove(x);
   }
-  //   state.map.setPaintProperty("layer_name", "text-opacity", 0.6);
   // console.log(data.mapEvent[index].geom.coordinates);
 }
-function submit() {
+async function submit() {
   info.data1 = {
     name: info.name,
     desc: info.desc,
@@ -339,7 +356,67 @@ function submit() {
   info.geom = {};
   info.show = false;
   data.draw.deleteAll();
+  info.changer = false;
   //   data.map.removeLayer(data.polygon);
+  let formData = {
+    id: 1,
+    Name: "",
+    discription: "LineString",
+    Geom: info.data1.geom1,
+  };
+  await $fetch("http://localhost:8080/map/geom", {
+    method: "POST",
+    //body: formData,
+    body: JSON.stringify(info.data1),
+  }).catch((err) => alert(err));
+}
+function changeColorOpacity(index) {
+  console.log("opacity", index, info.opacity);
+  let colorOpacity = info.opacity;
+  let colorPick;
+  // let flyToLocation;
+  let colorSelect = data.mapEvent.filter((e) => {
+    if (e.geom.id == data.mapEvent[index].geom.id) {
+      // flyToLocation = data.mapEvent[index].geom.geometry.coordinates[index];
+      // flyToLocation = e.geom.geometry.coordinates[0];
+      colorPick = e.color;
+      return e.color;
+    }
+  });
+  data.map.removeLayer(data.mapEvent[index].geom.id);
+  data.map.removeSource(data.mapEvent[index].geom.id);
+  data.map.addSource(data.mapEvent[index].geom.id, {
+    type: "geojson",
+    data: data.mapEvent[index].geom,
+  });
+  data.map.addLayer({
+    //   id: randonNo,
+    id: data.mapEvent[index].geom.id,
+    //   source: sId,
+    //   source: data.mapEvent[0].geom.id,
+    source: data.mapEvent[index].geom.id,
+    type: "fill",
+    layout: {},
+    paint: { "fill-color": colorPick, "fill-opacity": colorOpacity / 10 },
+  });
+}
+function deleteLayer(i) {
+  console.log("delete", i);
+  var confirmation = confirm(" Click OK to delete data !!!");
+  if (confirmation == true) {
+    let index = i + 1;
+    data.mapEvent.splice(index, 1);
+    info.changer = true;
+    info.deleteIndex = i;
+    data.map.removeLayer(data.mapEvent[i].geom.id);
+    data.map.removeSource(data.mapEvent[i].geom.id);
+    getMapData(data.map);
+    // data.map.removeLayer(data.mapEvent[i].geom.id);
+    // data.map.removeSource(data.mapEvent[i].geom.id);
+  } else {
+    alert("Something goes wrong!!!");
+  }
+  //   data.mapEvent.splice(i, 1);
 }
 function Cancel() {
   info.show = false;
@@ -355,7 +432,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #452c50;
+  color: rgb(62, 115, 221);
 }
 .w-screen {
   width: 100vw;
@@ -366,12 +443,12 @@ body {
 }
 .left1 {
   height: 100vh;
-  width: 25vw;
+  width: 20vw;
   float: left;
 }
 .right1 {
   height: 100vh;
-  width: 75vw;
+  width: 80vw;
   float: right;
   position: relative;
 }
@@ -385,8 +462,7 @@ body {
   width: 100%;
 }
 .bg-gray {
-  background-color: rgb(71, 97, 164);
-  /* width: 250px; */
+  background-color: rgb(16, 194, 225);
 }
 .zIndex {
   position: absolute;
@@ -399,16 +475,5 @@ body {
   left: 300px;
   top: 100px;
   z-index: 1;
-}
-#form {
-  background-color: skyblue;
-}
-.marker {
-  background-image: url("http://localhost:3000/assets/css/image/download.png");
-  background-size: cover;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  cursor: pointer;
 }
 </style>

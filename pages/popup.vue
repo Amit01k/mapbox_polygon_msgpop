@@ -9,6 +9,15 @@
           </td>
         </tr>
         <br />
+        <tr class="p-1">
+          <td class="p-1">
+            <label for="color">Select Color</label>
+          </td>
+          <td>
+            <input type="color" id="color" v-model="info.color" />
+          </td>
+        </tr>
+
         <!-- <tr>
           <td>description: <input type="text" /></td>
         </tr> -->
