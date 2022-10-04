@@ -23,7 +23,7 @@
             <th>Delete</th>
           </tr>
           <tr v-for="(val, index) in state.polygon" :key="val.name">
-            <td>{{ index + 1 }} ) {{ val.name }}</td>
+            <td>{{ index + 1 }}:) {{ val.name }}</td>
             <td>{{ val.desc }}</td>
 
             <td>
@@ -34,7 +34,7 @@
                 type="checkbox"
                 name="dataEvent"
                 id="checkedData"
-                @click="showDataOnMap($event, index)"
+                @click="GeoJSONDataToggle($event, index)"
               />
             </td>
             <td>
@@ -140,7 +140,7 @@ const state = reactive({
     style: "mapbox://styles/mapbox/streets-v11?optimize=true",
     // center: [444.04931277036667, 26.266912177018096] as number[], //uses longitude, latitude
     center: [80.93902587890625, 26.841533092305998] as number[],
-    zoom: 7,
+    zoom: 3,
     maxZoom: 22,
     crossSourceCollisions: false,
     failIfMajorPerformanceCaveat: false,
@@ -213,35 +213,35 @@ async function getMapData(tempMap: mapboxgl.Map) {
     console.log(state.polygon);
     console.log("data: ", state.polygon);
 
-    const featureCollection = {
-      type: "geojson",
-      data: {
-        type: "FeatureCollection",
-        features: [],
-      },
-    };
+    // const featureCollection = {
+    //   type: "geojson",
+    //   data: {
+    //     type: "FeatureCollection",
+    //     features: [],
+    //   },
+    // };
 
-    featureCollection.data.features = state.polygon.map((element) => {
-      return {
-        type: "Feature",
-        geometry: {
-          type: "Polygon",
-          coordinates: element.geom.coordinates,
-        },
-      };
-    });
+    // featureCollection.data.features = state.polygon.map((element) => {
+    //   return {
+    //     type: "Feature",
+    //     geometry: {
+    //       type: "Polygon",
+    //       coordinates: element.geom.coordinates,
+    //     },
+    //   };
+    // });
 
-    data.map.addSource("polygon-data", featureCollection);
+    // data.map.addSource("polygon-data", featureCollection);
 
-    data.map.addLayer({
-      id: "park-boundary",
-      type: "fill",
-      source: "polygon-data",
-      paint: {
-        "fill-color": "#A020F0",
-        "fill-opacity": 0.4,
-      },
-    });
+    // data.map.addLayer({
+    //   id: "park-boundary",
+    //   type: "fill",
+    //   source: "polygon-data",
+    //   paint: {
+    //     "fill-color": "#A020F0",
+    //     "fill-opacity": 0.4,
+    //   },
+    // });
   }
 }
 // // this function is used to show and hide mapEvent
@@ -433,6 +433,32 @@ async function onDeleteOfProduct(id) {
     method: "DELETE",
   });
   //getProductAPI();
+}
+///////////////////////////Toggle data///////////////////////////////////////////////
+//GeoJSONDataToggle();
+function GeoJSONDataToggle(e, index) {
+  console.log("this is come from toggle function line nu-440", e, index);
+  console.log("Checkbox clicked", state.polygon);
+  if (e.target.checked == true) {
+    console.log("index", state.polygon[index].geom);
+    data.map.addSource(state.polygon[index].id, {
+      type: "geojson",
+      data: state.polygon[index].geom,
+    });
+    data.map.addLayer({
+      id: state.polygon[index].id,
+      source: state.polygon[index].id,
+      type: "fill",
+      layout: {},
+      paint: {
+        "fill-color": state.polygon[index].color,
+        "fill-opacity": 0.5,
+      },
+    });
+  } else {
+    data.map.removeLayer(state.polygon[index].id);
+    data.map.removeSource(state.polygon[index].id);
+  }
 }
 </script>
 <style>
